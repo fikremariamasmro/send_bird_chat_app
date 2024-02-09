@@ -49,42 +49,48 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ],
       ),
-      body: BlocListener<ChatBloc, ChatState>(
-        listener: (context, state) {
-          if (state is ChatLoadedState || state is ChatMessageSentState) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _focusNode.unfocus();
-              _scrollToBottom();
-            });
-          }
-          if (state is ChannelInitialized) {
-            _channelBloc
-                .add(OpenChatChannel(LocalKeys.CHANNEL_URL, showLoading: true));
-          }
-          if (state is ChatMessageSentState) {
-            _channelBloc.add(
-                OpenChatChannel(LocalKeys.CHANNEL_URL, showLoading: false));
-          }
+      body: RefreshIndicator(
+        onRefresh: () {
+          return Future.delayed(const Duration(seconds: 3),
+              () => _channelBloc.add(InitializeChat()));
         },
-        child: BlocBuilder<ChatBloc, ChatState>(
-          builder: (context, state) {
-            if (state is ChannelInitializing || state is ConnectChatChannel) {
-              return ListView.builder(
-                itemCount: 10,
-                itemBuilder: (context, index) => const LoadingChatListTile(),
-              );
-            } else if (state is ChatLoadedState) {
-              return _itemBuilder(context, state);
-            } else if (state is ErrorOccurredState) {
-              return ErrorWidgetCard(
-                error: state.error,
-                onRetry: () => {
-                  _channelBloc.add(OpenChatChannel(LocalKeys.CHANNEL_URL)),
-                },
-              );
+        child: BlocListener<ChatBloc, ChatState>(
+          listener: (context, state) {
+            if (state is ChatLoadedState || state is ChatMessageSentState) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _focusNode.unfocus();
+                _scrollToBottom();
+              });
             }
-            return const SizedBox.shrink();
+            if (state is ChannelInitialized) {
+              _channelBloc.add(
+                  OpenChatChannel(LocalKeys.CHANNEL_URL, showLoading: true));
+            }
+            if (state is ChatMessageSentState) {
+              _channelBloc.add(
+                  OpenChatChannel(LocalKeys.CHANNEL_URL, showLoading: false));
+            }
           },
+          child: BlocBuilder<ChatBloc, ChatState>(
+            builder: (context, state) {
+              if (state is ChannelInitializing || state is ConnectChatChannel) {
+                return ListView.builder(
+                  itemCount: 10,
+                  itemBuilder: (context, index) => const LoadingChatListTile(),
+                );
+              } else if (state is ChatLoadedState) {
+                return _itemBuilder(context, state);
+              } else if (state is ErrorOccurredState) {
+                return ErrorWidgetCard(
+                  error: state.error,
+                  onRetry: () => {
+                    _channelBloc.add(OpenChatChannel(LocalKeys.CHANNEL_URL)),
+                  },
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ),
       bottomNavigationBar: MessageComposer(
