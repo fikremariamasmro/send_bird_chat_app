@@ -84,7 +84,7 @@ class _ChatPageState extends State<ChatPage> {
                 return ErrorWidgetCard(
                   error: state.error,
                   onRetry: () => {
-                    _channelBloc.add(OpenChatChannel(LocalKeys.CHANNEL_URL)),
+                    _channelBloc.add(InitializeChat()),
                   },
                 );
               }

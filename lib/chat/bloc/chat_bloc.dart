@@ -19,10 +19,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onInitializeChanel(
       InitializeChat event, Emitter<ChatState> emit) async {
-    emit(ChannelInitializing());
-    await SendbirdChat.init(appId: LocalKeys.APP_ID);
-    user = await SendbirdChat.connect(LocalKeys.USER_ID, nickname: "fkl");
-    emit(ChannelInitialized());
+    try {
+      emit(ChannelInitializing());
+      user = await SendbirdChat.connect(LocalKeys.USER_ID, nickname: "fkl");
+      emit(ChannelInitialized());
+    } catch (e) {
+      emit(ErrorOccurredState(e.toString()));
+    }
   }
 
   Future<void> _onEnterLoadChat(
